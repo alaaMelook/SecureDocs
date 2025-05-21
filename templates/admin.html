@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - SecureDocs</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Google Fonts for Poppins -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body class="bg-gray-100 font-sans">
+    <!-- Navigation -->
+    <nav class="bg-blue-600 text-white p-4 shadow-md">
+        <div class="container mx-auto flex justify-between items-center">
+            <a href="{{ url_for('dashboard') }}" class="text-2xl font-bold">SecureDocs</a>
+            <div>
+                {% if session.user_id %}
+                    <a href="{{ url_for('dashboard') }}" class="px-4 hover:underline">Dashboard</a>
+                    <a href="{{ url_for('documents') }}" class="px-4 hover:underline">Documents</a>
+                    <a href="{{ url_for('upload') }}" class="px-4 hover:underline">Upload</a>
+                    <a href="{{ url_for('profile') }}" class="px-4 hover:underline">Profile</a>
+                    {% if user.role == 'admin' %}
+                        <a href="{{ url_for('admin') }}" class="px-4 hover:underline">Admin</a>
+                    {% endif %}
+                    <a href="{{ url_for('logout') }}" class="px-4 hover:underline">Logout</a>
+                {% else %}
+                    <a href="{{ url_for('login') }}" class="px-4 hover:underline">Login</a>
+                    <a href="{{ url_for('register') }}" class="px-4 hover:underline">Register</a>
+                {% endif %}
+            </div>
+        </div>
+    </nav>
+
+    <!-- Flash Messages -->
+    <div class="container mx-auto mt-4">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="bg-{{ 'green' if category == 'success' else 'red' }}-100 border-{{ 'green' if category == 'success' else 'red' }}-400 text-{{ 'green' if category == 'success' else 'red' }}-700 px-4 py-3 rounded relative mb-4" role="alert">
+                        <span>{{ message }}</span>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+    </div>
+
+    <!-- Content -->
+    <div class="container mx-auto mt-8">
+        <h2 class="text-3xl font-bold text-center mb-6">Admin Panel</h2>
+
+        <!-- Users Section -->
+        <div class="bg-white p-6 rounded-lg shadow-md mb-6">
+            <h3 class="text-2xl font-semibold mb-4">Users</h3>
+            <a href="{{ url_for('add_user') }}" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 mb-4 inline-block">Add New User</a>
+            <table class="w-full border-collapse">
+                <thead>
+                    <tr class="bg-gray-200">
+                        <th class="border p-2">ID</th>
+                        <th class="border p-2">Email</th>
+                        <th class="border p-2">Role</th>
+                        <th class="border p-2">Created At</th>
+                        <th class="border p-2">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for u in users %}
+                        <tr>
+                            <td class="border p-2">{{ u.id }}</td>
+                            <td class="border p-2">{{ u.email }}</td>
+                            <td class="border p-2">{{ u.role }}</td>
+                            <td class="border p-2">{{ u.createdAt }}</td>
+                            <td class="border p-2">
+                                <a href="{{ url_for('edit_user', user_id=u.id) }}" class="text-blue-600 hover:underline">Edit</a> |
+                                <a href="{{ url_for('delete_user', user_id=u.id) }}" class="text-red-600 hover:underline" onclick="return confirm('Are you sure you want to delete this user?')">Delete</a> |
+                                <form action="{{ url_for('change_role', user_id=u.id) }}" method="POST" class="inline">
+                                    <select name="role" onchange="this.form.submit()">
+                                        <option value="user" {% if u.role == 'user' %}selected{% endif %}>User</option>
+                                        <option value="admin" {% if u.role == 'admin' %}selected{% endif %}>Admin</option>
+                                    </select>
+                                </form>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Documents Section -->
+        <div class="bg-white p-6 rounded-lg shadow-md mb-6">
+            <h3 class="text-2xl font-semibold mb-4">Documents</h3>
+            <table class="w-full border-collapse">
+                <thead>
+                    <tr class="bg-gray-200">
+                        <th class="border p-2">ID</th>
+                        <th class="border p-2">User ID</th>
+                        <th class="border p-2">Name</th>
+                        <th class="border p-2">Created At</th>
+                        <th class="border p-2">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for doc in documents %}
+                        <tr>
+                            <td class="border p-2">{{ doc.id }}</td>
+                            <td class="border p-2">{{ doc.userId }}</td>
+                            <td class="border p-2">{{ doc.name }}</td>
+                            <td class="border p-2">{{ doc.createdAt }}</td>
+                            <td class="border p-2">
+                                <a href="{{ url_for('download', id=doc.id) }}" class="text-blue-600 hover:underline">Download</a> |
+                                <a href="{{ url_for('edit_document', doc_id=doc.id) }}" class="text-blue-600 hover:underline">Edit</a> |
+                                <a href="{{ url_for('delete_document', doc_id=doc.id) }}" class="text-red-600 hover:underline" onclick="return confirm('Are you sure you want to delete this document?')">Delete</a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Logs Section -->
+        <div class="bg-white p-6 rounded-lg shadow-md">
+            <h3 class="text-2xl font-semibold mb-4">Audit Logs</h3>
+            <table class="w-full border-collapse">
+                <thead>
+                    <tr class="bg-gray-200">
+                        <th class="border p-2">ID</th>
+                        <th class="border p-2">User ID</th>
+                        <th class="border p-2">Action</th>
+                        <th class="border p-2">Created At</th>
+                        <th class="border p-2">Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for log in logs %}
+                        <tr>
+                            <td class="border p-2">{{ log.id }}</td>
+                            <td class="border p-2">{{ log.userId }}</td>
+                            <td class="border p-2">{{ log.action }}</td>
+                            <td class="border p-2">{{ log.createdAt }}</td>
+                            <td class="border p-2">
+                                {% if 'failed' in log.action.lower() %}
+                                    <span class="text-red-600 font-semibold">Suspicious</span>
+                                {% else %}
+                                    <span class="text-green-600">Normal</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    
+</body>
+</html>
